@@ -3,7 +3,7 @@ import random
 import numpy as np
 import supervision as sv
 
-from transformers import DetrImageProcessor, DetrForObjectDetection
+from transformers import DetrImageProcessor
 from transformers import Trainer, TrainingArguments
 import torch
 from PIL import Image
@@ -19,7 +19,6 @@ TEST_DATASET_PATH = os.path.join("dataset", "test")
 
 def main():
     processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
-    model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
     train_dataset = CocoDataset.CocoDetection(
         image_dir=TRAIN_DATASET_PATH,
@@ -43,7 +42,7 @@ def main():
     images_id = random.choice(train_dataset.coco.getImgIds())
     print(f"Image #{images_id}")
 
-    
+
 
 if __name__ == "__main__":
     main()
