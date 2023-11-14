@@ -2,23 +2,20 @@ import os
 import torch
 import torch.optim as optim
 import pytorch_lightning as pl
-from transformers import DetrForObjectDetection, DetrImageProcessor
-
-from get_data import CocoDataset
+from transformers import DetrForObjectDetection
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-TRAIN_DATASET_PATH = os.path.join("dataset", "test")
-VALID_DATASET_PATH = os.path.join("dataset", "valid")
-TEST_DATASET_PATH = os.path.join("dataset", "test")
-
 class DETR(pl.LightningModule):
-    def __init__(self, lr, lr_backbone):
+    def __init__(self, lr, lr_backbone, train_dataloader, val_dataloader, test_dataloader):
         super(DETR, self).__init__()
         self.lr = lr
         self.lr_backbone = lr_backbone
         self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
-        self.processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
+
+        self.train_data = train_dataloader
+        self.val_data = val_dataloader
+        self.test_data = test_dataloader
 
     def forward(self, pixel_values, pixel_mask):
         return self.model(pixel_values=pixel_values, pixel_mask=pixel_mask)
@@ -57,18 +54,10 @@ class DETR(pl.LightningModule):
         return outputs.loss
     
     def train_dataloader(self):
-        train_dataset = CocoDataset.CocoDetection(
-            image_dir=TRAIN_DATASET_PATH,
-            processor=self.processor,
-            train=True
-        )
-
-        return train_dataset
+        return self.train_data
     
     def val_dataloader(self):
-        val_dataset = CocoDataset.CocoDetection(
-            image_dir=TRAIN_DATASET_PATH,
-            processor=self.processor,
-            train=True
-        )
-        return val_dataset
+        return self.val_data
+    
+    def test_dataloader(self):
+        return self.test_data
