@@ -26,15 +26,13 @@ def main(args):
         devices=1,
         accelerator="gpu",
         max_epochs=args.epochs,
-        gradient_clip_val=0.1,
-        accumulate_grad_batches=8,
-        log_every_n_steps=5
+        log_every_n_steps=5,
     )
 
     trainer.fit(model)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="2023 Fall HAI Project - Object Detection")
+    parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
 
     parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
     parser.add_argument("--lr_backbone", help="Backbone learning rate", type=float, default=1e-5)
