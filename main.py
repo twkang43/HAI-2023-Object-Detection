@@ -1,48 +1,25 @@
 import os
-import random
-import numpy as np
-import supervision as sv
+import argparse
 
-from transformers import DetrImageProcessor
-from transformers import Trainer, TrainingArguments
+from pytorch_lightning import Trainer
 import torch
-from PIL import Image
 
-from get_data import CocoDataset
+from models import DETR
 
 HOME = os.getcwd()
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-TRAIN_DATASET_PATH = os.path.join("dataset", "test")
-VALID_DATASET_PATH = os.path.join("dataset", "valid")
-TEST_DATASET_PATH = os.path.join("dataset", "test")
-
-def main():
-    processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
-
-    train_dataset = CocoDataset.CocoDetection(
-        image_dir=TRAIN_DATASET_PATH,
-        processor=processor,
-        train=True
-    )
-
-    val_dataset = CocoDataset.CocoDetection(
-        image_dir=VALID_DATASET_PATH,
-        processor=processor,
-        train=False
-    )
-
-    test_dataset = CocoDataset.CocoDetection(
-        image_dir=TEST_DATASET_PATH,
-        processor=processor,
-        train=False
-    )
-
-    # Select random image
-    images_id = random.choice(train_dataset.coco.getImgIds())
-    print(f"Image #{images_id}")
-
-
+def main(args):
+    model = DETR.DETR(lr=args.lr, lr_backbone=args.lr_backbone).to(DEVICE)
+    trainer = Trainer(devices=1, accelerator=DEVICE, max_epochs=args.epochs)
+    trainer.fit(model)
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="2023 Fall HAI Project - Object Detection")
+
+    parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
+    parser.add_argument("--lr_backbone", help="Backbone learning rate", type=float, default=1e-5)
+    parser.add_argument("--epochs", help="Epochs", type=int, default=100)
+
+    args = parser.parse_args()
+    main(args)
