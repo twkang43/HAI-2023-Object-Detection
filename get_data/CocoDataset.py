@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 
 ANNOTATION_FILE_NAME = "_annotations.coco.json"
 
-TRAIN_DATASET_PATH = os.path.join("dataset", "test")
+TRAIN_DATASET_PATH = os.path.join("dataset", "train")
 VALID_DATASET_PATH = os.path.join("dataset", "valid")
 TEST_DATASET_PATH = os.path.join("dataset", "test")
 
@@ -53,7 +53,7 @@ class CocoDataLoader():
         )
 
     def get_dataloader(self):
-        train_dataloader = DataLoader(dataset=self.train_dataset, collate_fn=self.collate_fn, batch_size=4, shuffle=True)
+        train_dataloader = DataLoader(dataset=self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True)
         val_dataloader = DataLoader(dataset=self.val_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size)
         test_dataloader = DataLoader(dataset=self.test_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size)
 
@@ -63,5 +63,5 @@ class CocoDataLoader():
         pixel_values = [item[0] for item in batch]
         encoding = self.processor.pad(pixel_values, return_tensors="pt")
         labels = [item[1] for item in batch]
-        
+
         return {"pixel_values" : encoding["pixel_values"], "pixel_mask" : encoding["pixel_mask"], "labels" : labels}

@@ -3,6 +3,7 @@ import argparse
 
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.loggers import TensorBoardLogger
 
 from get_data import CocoDataset
 from models import DETR
@@ -22,11 +23,18 @@ def main(args):
         test_dataloader=test_dataloader
     ).to(DEVICE)
 
+    batch = next(iter(train_dataloader))
+    outputs = model(pixel_values=batch["pixel_values"].to(DEVICE), pixel_mask=batch["pixel_mask"].to(DEVICE))
+    print(outputs.logits.shape)
+
+    logger = TensorBoardLogger(save_dir="logs/")
+
     trainer = Trainer(
         devices=1,
         accelerator="gpu",
         max_epochs=args.epochs,
         log_every_n_steps=5,
+        logger=logger
     )
 
     trainer.fit(model)

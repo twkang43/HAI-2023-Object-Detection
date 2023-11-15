@@ -10,7 +10,11 @@ class DETR(pl.LightningModule):
         super(DETR, self).__init__()
         self.lr = lr
         self.lr_backbone = lr_backbone
-        self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
+
+        self.model = DetrForObjectDetection.from_pretrained(
+            "facebook/detr-resnet-50",
+            revision="no_timm"
+        )
 
         self.train_data = train_dataloader
         self.val_data = val_dataloader
@@ -34,7 +38,7 @@ class DETR(pl.LightningModule):
         outputs = self.model(pixel_values=pixel_values, pixel_mask=pixel_mask, labels=labels)
 
         self.log("training_loss", outputs.loss)
-        for k, v in outputs.loss_dicts.items():
+        for k, v in outputs.loss_dict.items():
             self.log("train_" + k, v.item())
 
         return outputs.loss
@@ -45,9 +49,8 @@ class DETR(pl.LightningModule):
         labels = [{k: v.to(DEVICE) for k, v in t.items()} for t in batch["labels"]]
 
         outputs = self.model(pixel_values=pixel_values, pixel_mask=pixel_mask, labels=labels)
-
         self.log("validation_loss", outputs.loss)
-        for k, v in outputs.loss_dicts.items():
+        for k, v in outputs.loss_dict.items():
             self.log("validation_" + k, v.item())
 
         return outputs.loss
