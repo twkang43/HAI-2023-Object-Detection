@@ -11,10 +11,7 @@ class DETR(pl.LightningModule):
         self.lr = lr
         self.lr_backbone = lr_backbone
 
-        self.model = DetrForObjectDetection.from_pretrained(
-            "facebook/detr-resnet-50",
-            revision="no_timm"
-        )
+        self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm"i)
 
         self.train_data = train_dataloader
         self.val_data = val_dataloader
