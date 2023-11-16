@@ -41,6 +41,19 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         imgIds = coco.getImgIds()
         img = coco.loadImgs(imgIds[np.random.randint(0,len(imgIds))])[0]
 
+        # Get all category IDs
+        catIds = coco.getCatIds()
+
+        # Load all categories
+        categories = coco.loadCats(catIds)
+
+        # Print category names
+        for i, category in enumerate(categories):
+            print(category["name"] + ", ", end="")
+
+            if i % 5 == 0:
+                print()
+
         # load and display image
         I = io.imread('%s/%s'%(image_dir,img["file_name"]))
         plt.axis("off")

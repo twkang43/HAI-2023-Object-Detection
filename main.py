@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
 
     parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
-    parser.add_argument("--epochs", help="Epochs", type=int, default=100)
+    parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=4)
 
     args = parser.parse_args()
