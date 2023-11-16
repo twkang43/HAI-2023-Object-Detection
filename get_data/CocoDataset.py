@@ -23,15 +23,15 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         self.show_random_img(coco, image_dir)
 
     def __getitem__(self, idx):
-        images, annotations = super(CocoDetection, self).__getitem__(idx)
+        img, target = super(CocoDetection, self).__getitem__(idx)
         image_id = self.ids[idx]
-        annotations = {"image_id" : image_id, "annotations" : annotations}
-
-        encoding = self.processor(images=images, annotations=annotations, return_tensors="pt")
+        target = {"image_id": image_id, "annotations": target}
+        
+        encoding = self.processor(images=img, annotations=target, return_tensors="pt")
         pixel_values = encoding["pixel_values"].squeeze()
         target = encoding["labels"][0]
 
-        return pixel_values, target
+        return {"pixel_values": pixel_values, "labels": target}
     
     def get_annotation_file_path(self, image_dir):
         return os.path.join(image_dir, ANNOTATION_FILE_NAME)

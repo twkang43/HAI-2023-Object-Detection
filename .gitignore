@@ -1,5 +1,4 @@
 dataset/
-lightning_logs/
+outputs/
 get_data/__pycache__
-models/__pycache__
-save_model/
+__pycache__

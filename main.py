@@ -3,23 +3,25 @@ import argparse
 
 import torch
 from torch.optim import AdamW
-from transformers import Trainer, TrainingArguments
+from transformers import Trainer, TrainingArguments, DetrForObjectDetection
 
 from get_data import CocoDataset
-from models import DETR
 
 HOME = os.getcwd()
-SAVE_MODEL = os.path.join(os.getcwd(), "save_model")
+OUTPUTS = os.path.join(os.getcwd(), "outputs")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(args):
     dataset = CocoDataset.CocoDataset(args.batch_size)
     train_dataset, val_dataset, test_dataset = dataset.get_dataset()
 
-    model = DETR.DETR(lr=args.lr).to(DEVICE)
+    model = DetrForObjectDetection.from_pretrained(
+        "facebook/detr-resnet-50",
+        revision="no_timm"
+    )
 
     training_args = TrainingArguments(
-        output_dir=SAVE_MODEL,
+        output_dir=OUTPUTS,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         num_train_epochs=args.epochs,
