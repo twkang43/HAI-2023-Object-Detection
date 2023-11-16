@@ -35,10 +35,13 @@ def main(args):
         optimizers=(AdamW(model.parameters()), None),
         data_collator=dataset.collate_fn,
         train_dataset=train_dataset,
-        eval_dataset=val_dataset
+        eval_dataset=val_dataset,
     )
 
     trainer.train()
+    test_result = trainer.predict(test_dataset)
+
+    print(test_result)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
