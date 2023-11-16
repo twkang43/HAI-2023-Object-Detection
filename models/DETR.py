@@ -1,17 +1,15 @@
 import torch
+import torch.nn as nn
 import torch.optim as optim
-import pytorch_lightning as pl
 from transformers import DetrForObjectDetection
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-class DETR(pl.LightningModule):
-    def __init__(self, lr, lr_backbone, train_dataloader, val_dataloader, test_dataloader):
+class DETR(nn.Module):
+    def __init__(self, lr, train_dataloader, val_dataloader, test_dataloader):
         super(DETR, self).__init__()
         self.lr = lr
-        self.lr_backbone = lr_backbone
-
-        self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm"i)
+        self.model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
         self.train_data = train_dataloader
         self.val_data = val_dataloader
