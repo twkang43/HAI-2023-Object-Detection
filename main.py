@@ -1,11 +1,13 @@
 import os
 import argparse
+import random
 
 import torch
 from torch.optim import AdamW
 from transformers import Trainer, TrainingArguments, DetrForObjectDetection
 
 from get_data import CocoDataset
+from utils import visualize
 
 HOME = os.getcwd()
 OUTPUTS = os.path.join(os.getcwd(), "outputs")
@@ -41,7 +43,7 @@ def main(args):
     trainer.train()
     test_result = trainer.predict(test_dataset)
 
-    print(test_result)
+    print(test_result["loss_ce"])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
