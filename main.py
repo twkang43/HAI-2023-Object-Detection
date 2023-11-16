@@ -31,8 +31,9 @@ def main(args):
 
     trainer = Trainer(
         model=model,
-        optimizers=(AdamW(model.parameters()), None),
         args=training_args,
+        optimizers=(AdamW(model.parameters()), None),
+        data_collator=dataset.collate_fn,
         train_dataset=train_dataset,
         eval_dataset=val_dataset
     )
@@ -47,4 +48,11 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", help="Batch size", type=int, default=4)
 
     args = parser.parse_args()
+    
+    # Print Arguments
+    print("------------ Arguments -------------")
+    for key, value in vars(args).items():
+        print(f"{key} : {value}")
+    print("------------------------------------")
+    
     main(args)

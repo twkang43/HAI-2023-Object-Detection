@@ -88,3 +88,15 @@ class CocoDataset():
     
     def get_dataset(self):
         return self.train_dataset, self.val_dataset, self.test_dataset
+    
+    def collate_fn(self, batch):
+        pixel_values = [item["pixel_values"] for item in batch]
+        encoding = self.processor.pad(pixel_values, return_tensors="pt")
+        labels = [item["labels"] for item in batch]
+
+        batch = {}
+        batch["pixel_values"] = encoding["pixel_values"]
+        batch["pixel_mask"] = encoding["pixel_mask"]
+        batch["labels"] = labels
+
+        return batch
