@@ -1,7 +1,6 @@
 import os
 import torchvision
 from transformers import DetrImageProcessor
-from torch.utils.data import DataLoader
 from pycocotools.coco import COCO
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -63,8 +62,8 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
         plt.title(image_dir)
         plt.show()
-    
-class CocoDataLoader():
+
+class CocoDataset():
     def __init__(self, batch_size):
         self.processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
         self.batch_size = batch_size
@@ -86,17 +85,6 @@ class CocoDataLoader():
             processor=self.processor,
             train=False
         )
-
-    def get_dataloader(self):
-        train_dataloader = DataLoader(dataset=self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True)
-        val_dataloader = DataLoader(dataset=self.val_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size)
-        test_dataloader = DataLoader(dataset=self.test_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size)
-
-        return train_dataloader, val_dataloader, test_dataloader
-
-    def collate_fn(self, batch):
-        pixel_values = [item[0] for item in batch]
-        encoding = self.processor.pad(pixel_values, return_tensors="pt")
-        labels = [item[1] for item in batch]
-
-        return {"pixel_values" : encoding["pixel_values"], "pixel_mask" : encoding["pixel_mask"], "labels" : labels}
+    
+    def get_dataset(self):
+        return self.train_dataset, self.val_dataset, self.test_dataset

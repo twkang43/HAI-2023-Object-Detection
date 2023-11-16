@@ -2,3 +2,4 @@ dataset/
 lightning_logs/
 get_data/__pycache__
 models/__pycache__
+save_model/
