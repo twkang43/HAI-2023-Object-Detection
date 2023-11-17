@@ -1,10 +1,6 @@
 import os
 import torchvision
 from transformers import DetrImageProcessor
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import skimage.io as io
-import numpy as np
 
 ANNOTATION_FILE_NAME = "_annotations.coco.json"
 

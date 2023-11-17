@@ -14,6 +14,8 @@ OUTPUTS = os.path.join(os.getcwd(), "outputs")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(args):
+    print(f"device : {DEVICE}")
+
     dataset = CocoDataset.CocoDataset(args.batch_size)
     train_dataset, val_dataset, test_dataset = dataset.get_dataset()
 
@@ -43,7 +45,7 @@ def main(args):
     trainer.train()
     test_result = trainer.predict(test_dataset)
 
-    print(test_result["loss_ce"])
+    print(f"Cross Entropy Loss : {test_result.predictions[0]['loss_ce']}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
