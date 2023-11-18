@@ -1,0 +1,95 @@
+import os
+import random
+import torch
+from PIL import Image, ImageDraw
+import numpy as np
+
+TEST_DATASET_PATH = os.path.join("dataset", "test")
+
+class DrawImage():
+    def __init__(self, model, processor, dataset):
+        super(DrawImage, self).__init__()
+        self.model = model
+        self.processor = processor
+        self.coco = dataset.coco
+
+    def draw_image(self):
+        image_ids = self.coco.getImgIds()
+        image_id = random.choice(image_ids)
+        print(f"Image #{image_id}")
+
+        image_coco = self.coco.loadImgs(image_id)[0]
+        print(image_coco['file_name'])
+        image_gt = Image.open(os.path.join(TEST_DATASET_PATH, image_coco['file_name']))
+        image_pred = Image.open(os.path.join(TEST_DATASET_PATH, image_coco['file_name']))
+
+        if not os.path.exists("output_images"):
+            os.mkdir("output_images")
+
+        self.draw_ground_truth(image_gt, image_coco)
+        self.draw_predict(image_pred)
+
+    def draw_ground_truth(self, image, image_coco):
+        draw = ImageDraw.Draw(image)
+
+        annIds = self.coco.getAnnIds(imgIds=image_coco['id'])
+        anns = self.coco.loadAnns(annIds)
+
+        for ann in anns:
+            bbox = ann["bbox"]
+            random_color = tuple(np.random.randint(0, 256, 3))
+
+            # bounding box 그리기
+            draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
+
+            cat_name = self.coco.loadCats(ann["category_id"])[0]["name"]
+
+            text_width, text_height = (0, 0)
+            draw.rectangle([bbox[0], bbox[1], bbox[0]+text_width, bbox[1]+text_height], fill=random_color)
+            draw.text((bbox[0], bbox[1]-15), cat_name, fill="white", spacing=4)
+
+        image_path = os.path.join("output_images", "ground_truth.png")
+        
+        # 이미지가 이미 존재한다면 삭제
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+        # 이미지 저장
+        image.save(image_path)
+
+    def draw_predict(self, image):
+        inputs = self.processor(images=image, return_tensors="pt").to("cuda")
+        outputs = self.model(**inputs)
+
+        target_sizes = torch.tensor([image.size[::-1]])
+        results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.1)[0]
+
+        draw = ImageDraw.Draw(image)
+
+        for score, label, bbox in zip(results["scores"], results["labels"], results["boxes"]):
+            bbox = [round(i, 2) for i in bbox.tolist()]
+
+            print(
+                f"Detected {self.model.config.id2label[label.item()]} with confidence "
+                f"{round(score.item(), 3)} at location {bbox}"
+            )
+            
+            random_color = tuple(np.random.randint(0, 256, 3))
+
+            # bounding box 그리기
+            draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
+
+            label_str = self.model.config.id2label[label.item()]
+            confidence_str = f"{round(score.item(), 3)}"
+
+            # bounding box 위에 label 및 confidence 표시
+            draw.text((bbox[0], bbox[1]-15), f"{label_str}: {confidence_str}", fill="white", font=None, anchor=None, spacing=4)
+
+        image_path = os.path.join("output_images", "predict.png")
+        
+        # 이미지가 이미 존재한다면 삭제
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+        # 이미지 저장
+        image.save(image_path)
