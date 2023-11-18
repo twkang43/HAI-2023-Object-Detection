@@ -37,7 +37,7 @@ def main(args):
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
             learning_rate=args.lr,
-            save_steps=2 * args.epochs
+            save_steps=2*args.epochs
         )
 
         trainer = Trainer(
@@ -50,14 +50,13 @@ def main(args):
         )
 
         trainer.train()
-        test_result = trainer.predict(test_dataset)
-
-        print(f"Cross Entropy Loss : {test_result.predictions[0]['loss_ce']}")
-
-        # Train 후 모델 저장
+        
         if not os.path.exists(SAVE_MODEL):
             os.mkdir(SAVE_MODEL)
         model.save_pretrained(os.path.join(SAVE_MODEL, "model"))
+
+        test_result = trainer.predict(test_dataset)
+        print(f"Cross Entropy Loss : {test_result.predictions[0]['loss_ce']}")
 
     if args.exec_mode == "eval":
         eval_trainer = Trainer(
@@ -66,8 +65,9 @@ def main(args):
             eval_dataset=test_dataset,
         )
 
-        eval_result = eval_trainer.evaluate()
-        print(f"Evaluation Result: {eval_result}")
+        with torch.no_grad():
+            eval_result = eval_trainer.evaluate()
+            print(f"Evaluation Result: {eval_result}")
 
         # test_dataset 내 이미지 랜덤으로 그리기
         draw_result = draw_image.DrawImage(model, processor, test_dataset)
@@ -78,8 +78,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
-    parser.add_argument("--batch_size", help="Batch size", type=int, default=4)
-    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="all", choices=["train", "eval"])
+    parser.add_argument("--batch_size", help="Batch size", type=int, default=10)
+    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval"])
     parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved"])
 
     args = parser.parse_args()
