@@ -1,4 +1,7 @@
 dataset/
 outputs/
+save_model/
+tmp_trainer/
+
 get_data/__pycache__
 __pycache__
