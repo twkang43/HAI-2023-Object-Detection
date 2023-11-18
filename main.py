@@ -3,7 +3,7 @@ import argparse
 
 import torch
 from torch.optim import AdamW
-from transformers import Trainer, TrainingArguments, DetrForObjectDetection
+from transformers import Trainer, TrainingArguments, DetrForObjectDetection, DetrImageProcessor
 
 from get_data import CocoDataset
 from utils import draw_image
@@ -16,17 +16,21 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def main(args):
     print(f"device : {DEVICE}")
 
-    dataset = CocoDataset.CocoDataset(args.batch_size)
-    train_dataset, val_dataset, test_dataset = dataset.get_dataset()
-
     if args.model == "detr":
-        model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50",revision="no_timm")
+        checkpoint = "facebook/detr-resnet-50"
     elif args.model == "saved":
-        model = DetrForObjectDetection.from_pretrained(os.path.join(SAVE_MODEL, "model"), revision="no_timm")
+        checkpoint = os.path.join(SAVE_MODEL, "model")
     else:
         return
+    
+    print(f"checkpoint : {checkpoint}")
+    model = DetrForObjectDetection.from_pretrained(checkpoint, revision="no_timm")
+    processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
-    if args.exec_mode == "train" or args.exec_mode == "all":
+    dataset = CocoDataset.CocoDataset(args.batch_size, processor)
+    train_dataset, val_dataset, test_dataset = dataset.get_dataset()
+
+    if args.exec_mode == "train":
         training_args = TrainingArguments(
             output_dir=OUTPUTS,
             per_device_train_batch_size=args.batch_size,
@@ -55,7 +59,7 @@ def main(args):
             os.mkdir(SAVE_MODEL)
         model.save_pretrained(os.path.join(SAVE_MODEL, "model"))
 
-    if args.exec_mode == "eval" or args.exec_mode == "all":
+    if args.exec_mode == "eval":
         eval_trainer = Trainer(
             model=model,
             data_collator=dataset.collate_fn,
@@ -66,7 +70,7 @@ def main(args):
         print(f"Evaluation Result: {eval_result}")
 
         # test_dataset 내 이미지 랜덤으로 그리기
-        draw_result = draw_image.DrawImage(model, test_dataset)
+        draw_result = draw_image.DrawImage(model, processor, test_dataset)
         draw_result.draw_image()
 
 if __name__ == "__main__":
@@ -75,7 +79,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=4)
-    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="all", choices=["train", "eval", "all"])
+    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="all", choices=["train", "eval"])
     parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved"])
 
     args = parser.parse_args()

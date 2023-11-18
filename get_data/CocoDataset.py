@@ -1,6 +1,5 @@
 import os
 import torchvision
-from transformers import DetrImageProcessor
 
 ANNOTATION_FILE_NAME = "_annotations.coco.json"
 
@@ -29,9 +28,9 @@ class CocoDetection(torchvision.datasets.CocoDetection):
         return os.path.join(image_dir, ANNOTATION_FILE_NAME)
     
 class CocoDataset():
-    def __init__(self, batch_size):
-        self.processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
+    def __init__(self, batch_size, processor):
         self.batch_size = batch_size
+        self.processor = processor
 
         self.train_dataset = CocoDetection(
             image_dir=TRAIN_DATASET_PATH,
