@@ -33,11 +33,13 @@ def main(args):
     if args.exec_mode == "train":
         training_args = TrainingArguments(
             output_dir=OUTPUTS,
+            logging_dir="./logs",
+            logging_steps=10*args.epochs,
             per_device_train_batch_size=args.batch_size,
             per_device_eval_batch_size=args.batch_size,
             num_train_epochs=args.epochs,
             learning_rate=args.lr,
-            save_steps=2*args.epochs
+            save_steps=50*args.epochs,
         )
 
         trainer = Trainer(

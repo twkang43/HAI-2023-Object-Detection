@@ -1,5 +1,6 @@
 dataset/
 outputs/
+logs/
 save_model/
 tmp_trainer/
 output_images/
