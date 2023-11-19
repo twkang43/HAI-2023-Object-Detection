@@ -1,5 +1,4 @@
 import os
-import random
 import torch
 from PIL import Image, ImageDraw
 import numpy as np
@@ -15,7 +14,7 @@ class DrawImage():
 
     def draw_image(self):
         image_ids = self.coco.getImgIds()
-        image_id = random.choice(image_ids)
+        image_id = image_ids[np.random.randint(0, len(image_ids))]
         print(f"Image #{image_id}")
 
         image_coco = self.coco.loadImgs(image_id)[0]
@@ -26,27 +25,24 @@ class DrawImage():
         if not os.path.exists("output_images"):
             os.mkdir("output_images")
 
-        self.draw_ground_truth(image_gt, image_coco)
+        self.draw_ground_truth(image_gt, image_id)
         self.draw_predict(image_pred)
 
-    def draw_ground_truth(self, image, image_coco):
+    def draw_ground_truth(self, image, image_id):
         draw = ImageDraw.Draw(image)
 
-        annIds = self.coco.getAnnIds(imgIds=image_coco['id'])
-        anns = self.coco.loadAnns(annIds)
+        anns = self.coco.imgToAnns[image_id]
+        cats = self.coco.cats
+        id2label = {k: v['name'] for k,v in cats.items()}
 
         for ann in anns:
-            bbox = ann["bbox"]
+            bbox = ann['bbox']
+            class_idx = ann['category_id']
             random_color = tuple(np.random.randint(0, 256, 3))
 
             # bounding box 그리기
             draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
-
-            cat_name = self.coco.loadCats(ann["category_id"])[0]["name"]
-
-            text_width, text_height = (0, 0)
-            draw.rectangle([bbox[0], bbox[1], bbox[0]+text_width, bbox[1]+text_height], fill=random_color)
-            draw.text((bbox[0], bbox[1]-15), cat_name, fill="white", spacing=4)
+            draw.text((bbox[0], bbox[1]-15), id2label[class_idx], fill="white", spacing=4)
 
         image_path = os.path.join("output_images", "ground_truth.png")
         

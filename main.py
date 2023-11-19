@@ -2,11 +2,12 @@ import os
 import argparse
 
 import torch
-from torch.optim import AdamW
-from transformers import Trainer, TrainingArguments, DetrForObjectDetection, DetrImageProcessor
+from pytorch_lightning import Trainer
+from transformers import DetrForObjectDetection, DetrImageProcessor, DetrConfig
 
 from get_data import CocoDataset
 from utils import draw_image
+from models import DETR
 
 HOME = os.getcwd()
 OUTPUTS = os.path.join(os.getcwd(), "outputs")
@@ -28,37 +29,27 @@ def main(args):
     processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
     dataset = CocoDataset.CocoDataset(args.batch_size, processor)
-    train_dataset, val_dataset, test_dataset = dataset.get_dataset()
+    train_dataloader, val_dataloader, test_dataloader = dataset.get_dataloader()
+    id2label = dataset.get_id2label()
 
     if args.exec_mode == "train":
-        training_args = TrainingArguments(
-            output_dir=OUTPUTS,
-            logging_dir="./logs",
-            logging_steps=10*args.epochs,
-            per_device_train_batch_size=args.batch_size,
-            per_device_eval_batch_size=args.batch_size,
-            num_train_epochs=args.epochs,
-            learning_rate=args.lr,
-            save_steps=50*args.epochs,
+        model = DETR.DETR(
+            lr=args.lr,
+            lr_backbone=args.lr_backbone,
+            weight_decay=args.weight_decay,
+            checkpoint=checkpoint,
+            id2label=id2label,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader
         )
 
-        trainer = Trainer(
-            model=model,
-            args=training_args,
-            optimizers=(AdamW(model.parameters()), None),
-            data_collator=dataset.collate_fn,
-            train_dataset=train_dataset,
-            eval_dataset=val_dataset,
-        )
+        batch = next(iter(train_dataloader))
+        print(f"batch.keys() : {batch.keys()}")
+        outputs = model(pixel_values=batch["pixel_values"], pixel_mask=batch["pixel_mask"])
+        print(outputs.logits.shape)
 
-        trainer.train()
-        
-        if not os.path.exists(SAVE_MODEL):
-            os.mkdir(SAVE_MODEL)
-        model.save_pretrained(os.path.join(SAVE_MODEL, "model"))
-
-        test_result = trainer.predict(test_dataset)
-        print(f"Cross Entropy Loss : {test_result.predictions[0]['loss_ce']}")
+        trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1)
+        trainer.fit(model)
 
     if args.exec_mode == "eval":
         eval_trainer = Trainer(
@@ -79,6 +70,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
 
     parser.add_argument("--lr", help="Learning rate", type=float, default=1e-4)
+    parser.add_argument("--lr_backbone", help="Backbone lr", type=float, default=1e-5)
+    parser.add_argument("--weight_decay", help="Weight Decay", type=float, default=1e-4)
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=10)
     parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval"])
