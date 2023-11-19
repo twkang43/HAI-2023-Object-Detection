@@ -50,6 +50,9 @@ class CocoDataset():
             processor=self.processor,
             train=False
         )
+
+    def get_dataset(self):
+        return self.train_dataset, self.val_dataset, self.test_dataset
     
     def get_dataloader(self):
         train_dataloader = DataLoader(self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True)

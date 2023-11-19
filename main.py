@@ -3,10 +3,12 @@ import argparse
 
 import torch
 from pytorch_lightning import Trainer
-from transformers import DetrForObjectDetection, DetrImageProcessor, DetrConfig
+from transformers import DetrImageProcessor
+from coco_eval import CocoEvaluator
+from tqdm import tqdm
 
 from get_data import CocoDataset
-from utils import draw_image
+from utils import draw_image, evaluate
 from models import DETR
 
 HOME = os.getcwd()
@@ -25,42 +27,57 @@ def main(args):
         return
     
     print(f"checkpoint : {checkpoint}")
-    model = DetrForObjectDetection.from_pretrained(checkpoint, revision="no_timm")
     processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
     dataset = CocoDataset.CocoDataset(args.batch_size, processor)
     train_dataloader, val_dataloader, test_dataloader = dataset.get_dataloader()
     id2label = dataset.get_id2label()
 
-    if args.exec_mode == "train":
-        model = DETR.DETR(
-            lr=args.lr,
-            lr_backbone=args.lr_backbone,
-            weight_decay=args.weight_decay,
-            checkpoint=checkpoint,
-            id2label=id2label,
-            train_dataloader=train_dataloader,
-            val_dataloader=val_dataloader
-        )
+    model = DETR.DETR(
+        lr=args.lr,
+        lr_backbone=args.lr_backbone,
+        weight_decay=args.weight_decay,
+        checkpoint=checkpoint,
+        id2label=id2label,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader
+    ).to(DEVICE)
 
+    if args.exec_mode == "train":
         batch = next(iter(train_dataloader))
         print(f"batch.keys() : {batch.keys()}")
-        outputs = model(pixel_values=batch["pixel_values"], pixel_mask=batch["pixel_mask"])
+        outputs = model(pixel_values=batch["pixel_values"].to(DEVICE), pixel_mask=batch["pixel_mask"].to(DEVICE))
         print(outputs.logits.shape)
 
-        trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1)
+        trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
         trainer.fit(model)
 
     if args.exec_mode == "eval":
-        eval_trainer = Trainer(
-            model=model,
-            data_collator=dataset.collate_fn,
-            eval_dataset=test_dataset,
-        )
+        print("Evaluation...")
+        _, _, test_dataset = dataset.get_dataset()
 
         with torch.no_grad():
-            eval_result = eval_trainer.evaluate()
-            print(f"Evaluation Result: {eval_result}")
+            model.eval()
+            evaluator = CocoEvaluator(coco_gt=test_dataset.coco, iou_types=["bbox"])
+
+            for _, batch in enumerate(tqdm(test_dataloader)):
+                pixel_values = batch["pixel_values"].to(DEVICE)
+                pixel_mask = batch["pixel_mask"].to(DEVICE)
+                labels = [{k: v.to(DEVICE) for k,v in t.items()} for t in batch["labels"]]
+
+                outputs = model(pixel_values=pixel_values, pixel_mask=pixel_mask)
+
+                original_target_sizes = torch.stack([target["orig_size"] for target in labels], dim=0)
+                results = processor.post_process_object_detection(outputs, target_sizes=original_target_sizes, threshold=0)
+
+                predictions = {target["image_id"].item(): output for target,output in zip(labels, results)}
+                predictions = evaluate.prepare_for_coco_detection(predictions)
+                evaluator.update(predictions)
+
+            evaluator.synchronize_between_processes()
+            evaluator.accumulate()
+            
+            print(evaluator.summarize())
 
         # test_dataset 내 이미지 랜덤으로 그리기
         draw_result = draw_image.DrawImage(model, processor, test_dataset)

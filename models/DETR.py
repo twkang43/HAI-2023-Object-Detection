@@ -11,8 +11,8 @@ class DETR(pl.LightningModule):
         self.lr = lr
         self.lr_backbone = lr_backbone
         self.weight_decay = weight_decay
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
+        self.train_data = train_dataloader
+        self.val_data = val_dataloader
         self.model = DetrForObjectDetection.from_pretrained(checkpoint, num_labels=len(id2label), ignore_mismatched_sizes=True)
 
     def forward(self, pixel_values, pixel_mask):
@@ -53,7 +53,7 @@ class DETR(pl.LightningModule):
         return loss
 
     def train_dataloader(self):
-        return self.train_dataloader
+        return self.train_data
     
     def val_dataloader(self):
-        return self.val_dataloader
+        return self.val_data
