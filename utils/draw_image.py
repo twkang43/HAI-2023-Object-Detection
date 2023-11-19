@@ -1,9 +1,10 @@
 import os
 import torch
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
-TEST_DATASET_PATH = os.path.join("dataset", "test")
+DATASET_PATH = os.path.join("dataset", "test")
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class DrawImage():
     def __init__(self, model, processor, dataset):
@@ -11,6 +12,7 @@ class DrawImage():
         self.model = model
         self.processor = processor
         self.coco = dataset.coco
+        self.font = ImageFont.truetype(os.path.join("fonts", "Pretendard-Bold.otf"), 15)
 
     def draw_image(self):
         image_ids = self.coco.getImgIds()
@@ -18,9 +20,10 @@ class DrawImage():
         print(f"Image #{image_id}")
 
         image_coco = self.coco.loadImgs(image_id)[0]
-        print(image_coco['file_name'])
-        image_gt = Image.open(os.path.join(TEST_DATASET_PATH, image_coco['file_name']))
-        image_pred = Image.open(os.path.join(TEST_DATASET_PATH, image_coco['file_name']))
+        print(image_coco["file_name"])
+
+        image_gt = Image.open(os.path.join(DATASET_PATH, image_coco["file_name"]))
+        image_pred = Image.open(os.path.join(DATASET_PATH, image_coco["file_name"]))
 
         if not os.path.exists("output_images"):
             os.mkdir("output_images")
@@ -33,16 +36,16 @@ class DrawImage():
 
         anns = self.coco.imgToAnns[image_id]
         cats = self.coco.cats
-        id2label = {k: v['name'] for k,v in cats.items()}
+        id2label = {k: v["name"] for k,v in cats.items()}
 
         for ann in anns:
-            bbox = ann['bbox']
-            class_idx = ann['category_id']
+            bbox = ann["bbox"]
+            class_idx = ann["category_id"]
             random_color = tuple(np.random.randint(0, 256, 3))
 
             # bounding box 그리기
             draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
-            draw.text((bbox[0], bbox[1]-15), id2label[class_idx], fill="white", spacing=4)
+            draw.text((bbox[0], bbox[1]-20), id2label[class_idx], fill="white", font=self.font, spacing=4)
 
         image_path = os.path.join("output_images", "ground_truth.png")
         
@@ -54,19 +57,22 @@ class DrawImage():
         image.save(image_path)
 
     def draw_predict(self, image):
-        inputs = self.processor(images=image, return_tensors="pt").to("cuda")
+        inputs = self.processor(images=image, return_tensors="pt").to(DEVICE)
         outputs = self.model(**inputs)
 
         target_sizes = torch.tensor([image.size[::-1]])
         results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.1)[0]
 
+        id2label = {k: v["name"] for k,v in self.coco.cats.items()}
         draw = ImageDraw.Draw(image)
 
         for score, label, bbox in zip(results["scores"], results["labels"], results["boxes"]):
+            label_str = id2label[label.item()]
+            confidence_str = f"{round(score.item(), 3)}"
             bbox = [round(i, 2) for i in bbox.tolist()]
 
             print(
-                f"Detected {self.model.config.id2label[label.item()]} with confidence "
+                f"Detected {label_str} with confidence "
                 f"{round(score.item(), 3)} at location {bbox}"
             )
             
@@ -75,11 +81,8 @@ class DrawImage():
             # bounding box 그리기
             draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
 
-            label_str = self.model.config.id2label[label.item()]
-            confidence_str = f"{round(score.item(), 3)}"
-
             # bounding box 위에 label 및 confidence 표시
-            draw.text((bbox[0], bbox[1]-15), f"{label_str}: {confidence_str}", fill="white", font=None, anchor=None, spacing=4)
+            draw.text((bbox[0], bbox[1]-20), f"{label_str}: {confidence_str}", fill="white", font=self.font, anchor=None, spacing=4)
 
         image_path = os.path.join("output_images", "predict.png")
         

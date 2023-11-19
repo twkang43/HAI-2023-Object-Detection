@@ -3,7 +3,7 @@ import argparse
 
 import torch
 from pytorch_lightning import Trainer
-from transformers import DetrImageProcessor
+from transformers import DetrImageProcessor, DetrForObjectDetection
 from coco_eval import CocoEvaluator
 from tqdm import tqdm
 
@@ -31,30 +31,31 @@ def main(args):
 
     dataset = CocoDataset.CocoDataset(args.batch_size, processor)
     train_dataloader, val_dataloader, test_dataloader = dataset.get_dataloader()
+    train_dataset, val_dataset, test_dataset = dataset.get_dataset()
     id2label = dataset.get_id2label()
 
-    model = DETR.DETR(
-        lr=args.lr,
-        lr_backbone=args.lr_backbone,
-        weight_decay=args.weight_decay,
-        checkpoint=checkpoint,
-        id2label=id2label,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader
-    ).to(DEVICE)
+    if args.exec_mode == "train" or args.exec_mode == "eval":
+        model = DETR.DETR(
+            lr=args.lr,
+            lr_backbone=args.lr_backbone,
+            weight_decay=args.weight_decay,
+            checkpoint=checkpoint,
+            id2label=id2label,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader
+        ).to(DEVICE)
+
+    elif args.exec_mode == "draw":
+        model = DetrForObjectDetection.from_pretrained(checkpoint, revision="no_timm").to(DEVICE)
 
     if args.exec_mode == "train":
-        batch = next(iter(train_dataloader))
-        print(f"batch.keys() : {batch.keys()}")
-        outputs = model(pixel_values=batch["pixel_values"].to(DEVICE), pixel_mask=batch["pixel_mask"].to(DEVICE))
-        print(outputs.logits.shape)
+        print("Training...")
 
         trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
         trainer.fit(model)
 
-    if args.exec_mode == "eval":
+    elif args.exec_mode == "eval":
         print("Evaluation...")
-        _, _, test_dataset = dataset.get_dataset()
 
         with torch.no_grad():
             model.eval()
@@ -79,6 +80,9 @@ def main(args):
             
             print(evaluator.summarize())
 
+    elif args.exec_mode == "draw":
+        print("Drawing...")
+
         # test_dataset 내 이미지 랜덤으로 그리기
         draw_result = draw_image.DrawImage(model, processor, test_dataset)
         draw_result.draw_image()
@@ -91,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", help="Weight Decay", type=float, default=1e-4)
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=10)
-    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval"])
+    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval", "draw"])
     parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved"])
 
     args = parser.parse_args()
