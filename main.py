@@ -54,6 +54,11 @@ def main(args):
         trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
         trainer.fit(model)
 
+        # Train 후 모델 저장
+        if not os.path.exists(SAVE_MODEL):
+            os.mkdir(SAVE_MODEL)
+        model.model.save_pretrained(os.path.join(SAVE_MODEL, "model"))
+
     elif args.exec_mode == "eval":
         print("Evaluation...")
 
