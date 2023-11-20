@@ -1,5 +1,6 @@
 dataset/
 outputs/
+lightning_logs/
 save_model/
 tmp_trainer/
 output_images/

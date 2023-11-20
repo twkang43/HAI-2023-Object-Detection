@@ -1,5 +1,6 @@
 import os
 import torchvision
+from torch.utils.data import DataLoader
 
 ANNOTATION_FILE_NAME = "_annotations.coco.json"
 
@@ -49,9 +50,22 @@ class CocoDataset():
             processor=self.processor,
             train=False
         )
-    
+
     def get_dataset(self):
         return self.train_dataset, self.val_dataset, self.test_dataset
+    
+    def get_dataloader(self):
+        train_dataloader = DataLoader(self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True)
+        val_dataloader = DataLoader(self.val_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False)
+        test_dataloader = DataLoader(self.test_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False)
+
+        return train_dataloader, val_dataloader, test_dataloader
+    
+    def get_id2label(self):
+        cats = self.train_dataset.coco.cats
+        id2label = {k: v['name'] for k,v in cats.items()}
+
+        return id2label
     
     def collate_fn(self, batch):
         pixel_values = [item["pixel_values"] for item in batch]

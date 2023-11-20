@@ -1,0 +1,1 @@
+python main.py --exec_mode draw --model saved
