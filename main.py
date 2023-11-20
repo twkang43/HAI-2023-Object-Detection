@@ -12,7 +12,6 @@ from utils import draw_image, evaluate
 from models import DETR
 
 HOME = os.getcwd()
-OUTPUTS = os.path.join(os.getcwd(), "outputs")
 SAVE_MODEL = os.path.join(os.getcwd(), "save_model")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -51,7 +50,7 @@ def main(args):
     if args.exec_mode == "train":
         print("Training...")
 
-        trainer = Trainer(devices=1, accelerator="gpu", max_steps=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
+        trainer = Trainer(devices=1, accelerator="gpu", max_epochs=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
         trainer.fit(model)
 
         # Train 후 모델 저장
