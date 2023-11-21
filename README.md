@@ -15,7 +15,7 @@ eval : ```bash ./scripts/eval.sh```
 
 draw(bbox 그려진 이미지 그리기) : ```bash ./scripts/draw.sh```
 
-use_model(모델을 사용해 image를 image with bbox와 식재료 리스트로 변경) : ```bash ./scripts/use_model.sh```
+use_model(모델을 사용해 image를 image with bbox와 식재료 리스트로 저장) : ```bash ./scripts/use_model.sh```
 
 
 인자를 직접 설정하고자 할 때는, python main.py --help를 통해 인자에 대한 설명을 볼 수 있습니다.
