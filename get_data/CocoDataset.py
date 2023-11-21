@@ -55,9 +55,9 @@ class CocoDataset():
         return self.train_dataset, self.val_dataset, self.test_dataset
     
     def get_dataloader(self):
-        train_dataloader = DataLoader(self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True)
-        val_dataloader = DataLoader(self.val_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False)
-        test_dataloader = DataLoader(self.test_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False)
+        train_dataloader = DataLoader(self.train_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=True, num_workers=4)
+        val_dataloader = DataLoader(self.val_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False, num_workers=4)
+        test_dataloader = DataLoader(self.test_dataset, collate_fn=self.collate_fn, batch_size=self.batch_size, shuffle=False, num_workers=4)
 
         return train_dataloader, val_dataloader, test_dataloader
     
@@ -66,6 +66,12 @@ class CocoDataset():
         id2label = {k: v['name'] for k,v in cats.items()}
 
         return id2label
+    
+    def get_label2id(self):
+        cats = self.train_dataset.coco.cats
+        label2id = {v['name']: k for k,v in cats.items()}
+
+        return label2id
     
     def collate_fn(self, batch):
         pixel_values = [item["pixel_values"] for item in batch]

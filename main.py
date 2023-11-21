@@ -32,6 +32,7 @@ def main(args):
     train_dataloader, val_dataloader, test_dataloader = dataset.get_dataloader()
     train_dataset, val_dataset, test_dataset = dataset.get_dataset()
     id2label = dataset.get_id2label()
+    label2id = dataset.get_label2id()
 
     if not os.path.exists("input_image"):
         os.mkdir("input_image")
@@ -54,6 +55,9 @@ def main(args):
 
     if args.exec_mode == "train":
         print("Training...")
+
+        model.model.config.id2label = id2label
+        model.model.config.label2id = label2id
 
         trainer = Trainer(devices=1, accelerator="gpu", max_epochs=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
         trainer.fit(model)
