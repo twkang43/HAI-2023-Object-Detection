@@ -3,6 +3,7 @@ import argparse
 
 import torch
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 from transformers import DetrImageProcessor, DetrForObjectDetection
 from coco_eval import CocoEvaluator
 from tqdm import tqdm
@@ -59,7 +60,24 @@ def main(args):
         model.model.config.id2label = id2label
         model.model.config.label2id = label2id
 
-        trainer = Trainer(devices=1, accelerator="gpu", max_epochs=args.epochs, gradient_clip_val=0.1, accumulate_grad_batches=8, log_every_n_steps=5)
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val_loss"
+            dirpath=os.path.join("save_model", "tmp_model")
+            filename="model-{epochs:02d}-{val_loss:.2f}"
+            save_top_k=1
+            mode="min"
+        )
+
+        trainer = Trainer(
+            devices=1, 
+            accelerator="gpu",
+            max_epochs=args.epochs,
+            gradient_clip_val=0.1,
+            accumulate_grad_batches=8,
+            log_every_n_steps=5,
+            callbacks=[checkpoint_callback]
+        )
+
         trainer.fit(model)
 
         # Train 후 모델 저장
