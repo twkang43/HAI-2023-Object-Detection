@@ -8,7 +8,7 @@ from coco_eval import CocoEvaluator
 from tqdm import tqdm
 
 from get_data import CocoDataset
-from utils import draw_image, evaluate
+from utils import draw_image, evaluate, predict_with_input
 from models import DETR
 
 HOME = os.getcwd()
@@ -33,6 +33,11 @@ def main(args):
     train_dataset, val_dataset, test_dataset = dataset.get_dataset()
     id2label = dataset.get_id2label()
 
+    if not os.path.exists("input_image"):
+        os.mkdir("input_image")
+    if not os.path.exists("outputs"):
+        os.mkdir("outputs")
+
     if args.exec_mode == "train" or args.exec_mode == "eval":
         model = DETR.DETR(
             lr=args.lr,
@@ -44,7 +49,7 @@ def main(args):
             val_dataloader=val_dataloader
         ).to(DEVICE)
 
-    elif args.exec_mode == "draw":
+    elif args.exec_mode == "draw" or args.exec_mode == "use_model":
         model = DetrForObjectDetection.from_pretrained(checkpoint, revision="no_timm").to(DEVICE)
 
     if args.exec_mode == "train":
@@ -91,6 +96,30 @@ def main(args):
         draw_result = draw_image.DrawImage(model, processor, test_dataset)
         draw_result.draw_image()
 
+    elif args.exec_mode == "use_model":
+        print("Prediction with input images")
+        predict = predict_with_input.InputPrediction(
+            model=model, 
+            processor=processor, 
+            coco=train_dataset.coco,
+            device=DEVICE
+        )
+
+        # input image 가져오기
+        try:
+            input_image, image_name = predict.get_input()
+        except Exception as e:
+            print(f"ERROR! : {e}")
+            return
+
+        # input image에 대한 prediction
+        prediction = predict.predict(input_image, threshold=0.05)
+
+        # prediction 시각화 & 식재료 set 저장
+        predict.draw_bbox(input_image, image_name, prediction)
+        predict.save_ingredients_set(prediction, image_name)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="2023 Fall HAI Project Team 2 - Object Detection")
 
@@ -99,7 +128,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_decay", help="Weight Decay", type=float, default=1e-4)
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=10)
-    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval", "draw"])
+    parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval", "draw", "use_model"])
     parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved"])
 
     args = parser.parse_args()
