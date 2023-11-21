@@ -61,10 +61,10 @@ def main(args):
         model.model.config.label2id = label2id
 
         checkpoint_callback = ModelCheckpoint(
-            monitor="val_loss"
-            dirpath=os.path.join("save_model", "tmp_model")
-            filename="model-{epochs:02d}-{val_loss:.2f}"
-            save_top_k=1
+            monitor="val_loss",
+            dirpath=os.path.join("save_model", "tmp_model"),
+            filename="model-{epochs:02d}-{val_loss:.2f}",
+            save_top_k=1,
             mode="min"
         )
 
