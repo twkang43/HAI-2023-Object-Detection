@@ -98,10 +98,12 @@ def main(args):
 
     elif args.exec_mode == "use_model":
         print("Prediction with input images")
+        id2label = {k: v["name"] for k,v in train_dataset.coco.cats.items()}
+
         predict = predict_with_input.InputPrediction(
             model=model, 
             processor=processor, 
-            coco=train_dataset.coco,
+            id2label=id2label,
             device=DEVICE
         )
 
@@ -113,7 +115,7 @@ def main(args):
             return
 
         # input image에 대한 prediction
-        prediction = predict.predict(input_image, threshold=0.05)
+        prediction = predict.predict(input_image, threshold=0.2)
 
         # prediction 시각화 & 식재료 set 저장
         predict.draw_bbox(input_image, image_name, prediction)

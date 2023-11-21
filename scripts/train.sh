@@ -1,1 +1,1 @@
-python main.py --exec_mode train --model detr --epochs 100 --lr 1e-4 --lr_backbone 1e-5 --weight_decay 1e-4 --batch_size 4
+python main.py --exec_mode train --model detr --epochs 300 --lr 1e-4 --lr_backbone 1e-5 --weight_decay 1e-4 --batch_size 4

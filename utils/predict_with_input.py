@@ -8,11 +8,11 @@ INPUT_PATH = os.path.join(os.getcwd(), "input_image")
 OUTPUT_PATH = os.path.join(os.getcwd(), "outputs")
 
 class InputPrediction():
-    def __init__(self, model, processor, coco, device):
+    def __init__(self, model, processor, id2label, device):
         super(InputPrediction, self).__init__()
         self.model = model
         self.processor = processor
-        self.id2label = {k: v["name"] for k,v in coco.cats.items()}
+        self.id2label = id2label
         self.device = device
         self.font = ImageFont.truetype(os.path.join("fonts", "Pretendard-Bold.otf"), 15)
 

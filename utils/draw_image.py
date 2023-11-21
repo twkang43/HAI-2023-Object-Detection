@@ -61,7 +61,7 @@ class DrawImage():
         outputs = self.model(**inputs)
 
         target_sizes = torch.tensor([image.size[::-1]])
-        results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.05)[0]
+        results = self.processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.2)[0]
 
         id2label = {k: v["name"] for k,v in self.coco.cats.items()}
         draw = ImageDraw.Draw(image)
