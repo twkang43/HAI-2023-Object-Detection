@@ -7,6 +7,14 @@
 
 혹여 누락된 패키지가 있다면, 해당 패키지는 ```pip install (package)```를 통해 설치하시면 됩니다.
 
+## 데이터셋 다운로드
+아래의 데이터셋을 사용했습니다.
+
+https://universe.roboflow.com/ha-jong-myeong/mofu/dataset/3
+
+위 링크에서 데이터셋(roboflow.zip)을 다운로드 받은 후, 
+main.py가 있는 경로에 dataset 폴더를 생성한 뒤 해당 폴더 안에 roboflow.zip 파일을 압축해제하시면 됩니다.
+
 
 ## 실행방법
 trian : ```bash ./scripts/train.sh```
