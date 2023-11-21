@@ -22,7 +22,7 @@ use_model(모델을 사용해 image를 image with bbox와 식재료 리스트로
 
 
 ## 모델 사용 관련
-input_image 폴더 내의 마지막 이미지를 model에 넣어 bbox를 그린 이미지와 식재료 리스트(집합)을 저장합니다.
+input_image 폴더 내의 마지막 이미지를 model에 넣어 bbox를 그린 이미지와 식재료 리스트(집합)을 outputs 폴더에 저장합니다.
 
 bbox를 그린 이미지는 "bbox_(model에 넣은 이미지 이름)"으로 저장되고, 식재료 리스트는 "ingredients_(model에 넣은 이미지 이름)"으로 저장됩니다.
 
