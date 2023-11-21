@@ -3,8 +3,8 @@
 #packages = ['fastapi', 'uvicorn']
 
 #for package in packages:
- #   try:
-  #      importlib.import_module(package)
+#   try:
+#      importlib.import_module(package)
 #    except ImportError:
 #        importlib.install(package)
 #fastAPI와 uvicorn가 깔려있다면 코드 삭제해도 무방
