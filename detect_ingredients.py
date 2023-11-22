@@ -48,3 +48,5 @@ def detect_ingredients(image_name):
     # prediction 시각화 & 식재료 set 저장
     predict.draw_bbox(input_image, image_name, prediction)
     predict.save_ingredients_set(prediction, image_name)
+
+detect_ingredients("DSC_5774_JPG_jpg.rf.1057b37f4a69f82473279c5396311afa.jpg")
