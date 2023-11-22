@@ -19,7 +19,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def main(args):
     print(f"device : {DEVICE}")
 
-    if args.model == "detr":
+    if args.model == "detr" or args.model == "checkpoint":
         checkpoint = "facebook/detr-resnet-50"
     elif args.model == "saved":
         checkpoint = os.path.join(SAVE_MODEL, "model")
@@ -61,7 +61,7 @@ def main(args):
         model.model.config.label2id = label2id
 
         checkpoint_callback = ModelCheckpoint(
-            monitor="val_loss",
+            monitor="validation_loss",
             dirpath=os.path.join("save_model", "tmp_model"),
             filename="model-{epochs:02d}-{val_loss:.2f}",
             save_top_k=1,
@@ -78,7 +78,10 @@ def main(args):
             callbacks=[checkpoint_callback]
         )
 
-        trainer.fit(model)
+        if args.model == "checkpoint":
+            trainer.fit(model, ckpt_path=os.path.join(SAVE_MODEL, "tmp_model", "model-epochs=00-val_loss=0.00.ckpt"))
+        else:
+            trainer.fit(model)
 
         # Train 후 모델 저장
         if not os.path.exists(SAVE_MODEL):
@@ -153,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", help="Epochs", type=int, default=30)
     parser.add_argument("--batch_size", help="Batch size", type=int, default=10)
     parser.add_argument("--exec_mode", help="Execution mode", type=str, default="eval", choices=["train", "eval", "draw", "use_model"])
-    parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved"])
+    parser.add_argument("--model", help="Vanilla DETR or Saved Model", type=str, default="detr", choices=["detr", "saved", "checkpoint"])
 
     args = parser.parse_args()
     
