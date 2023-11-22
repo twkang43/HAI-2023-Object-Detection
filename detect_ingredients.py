@@ -43,7 +43,7 @@ def detect_ingredients(image_name):
         return
 
     # input image에 대한 prediction
-    prediction = predict.predict(input_image, threshold=0.2)
+    prediction = predict.predict(input_image, threshold=0.8)
 
     # prediction 시각화 & 식재료 set 저장
     predict.draw_bbox(input_image, image_name, prediction)
