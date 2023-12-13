@@ -48,7 +48,7 @@ class InputPrediction():
             random_color = tuple(np.random.randint(0, 256, 3))
 
             # bounding box 그리기
-            draw.rectangle([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]], outline=random_color, width=2)
+            draw.rectangle([bbox[0], bbox[1], bbox[2], bbox[3]], outline=random_color, width=2)
 
             # bounding box 위에 label 및 confidence 표시
             draw.text((bbox[0], bbox[1]-20), f"{label_str}", fill="white", font=self.font, anchor=None, spacing=4)
